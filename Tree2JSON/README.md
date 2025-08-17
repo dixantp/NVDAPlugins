@@ -1,1 +1,0 @@
-This is the source code for the Tree2JSON NVDA Plugin.
