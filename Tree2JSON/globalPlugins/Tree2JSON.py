@@ -18,8 +18,8 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
     @script(
         description = "Capture screenshot and dump accessibility tree to JSON",
-        category = "Accessibility Tre Dumper",
-        gesture = "kb:NVDA+shift+d",
+        category = "Accessibility Tree Dumper",
+        gesture = "kb:NVDA+shift+p",
     )
     
     def script_dumpAccessibilityTree(self, gesture):
