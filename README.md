@@ -7,7 +7,7 @@ A repo of useful NVDA plugins
 
 1. Save the `Tree2JSON.py` file in your NVDA user configuration directory
 2. Restart NVDA: The plugin will be loaded automatically
-3. Use the hotkey: Press `NVDA+Shift+D` to capture a screenshot and dump accessibility data
+3. Use the hotkey: Press `NVDA+Shift+P` to capture a screenshot and dump accessibility data
 
 ### Output format
 The plugin generates the follow JSON (the following is an example output)
