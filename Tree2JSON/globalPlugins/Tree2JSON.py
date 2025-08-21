@@ -10,6 +10,12 @@ from PIL import ImageGrab
 import os
 import time
 from datetime import datetime
+import sys
+
+# Add the 'lib' folder to the Python path
+lib_path = os.path.join(os.path.dirname(__file__), '..', 'lib')
+if lib_path not in sys.path:
+    sys.path.insert(0, lib_path)
 
 class GlobalPlugin(globalPluginHandler.GlobalPlugin):
 
@@ -22,10 +28,12 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         gesture = "kb:NVDA+shift+p",
     )
     
+    
     def script_dumpAccessibilityTree(self, gesture):
         """
         Main function to capture screenshot and dump accessibility data
         """
+        ui.message("Tree2JSON hotkey pressed!")
         try:
             # Create output directory
             output_dir = os.path.join(os.path.expanduser("~"), "Desktop", "nvda_dumps")
@@ -102,107 +110,108 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
         except:
             pass
 
-        def extract_element_data(self, obj, screen_width, screen_height):
-            """
-            Extract data from a single accessibility object
-            """
-            try:
-                # Skip objects without location
-                if not hasattr(obj, 'location') or not obj.location:
-                    return None
-                
-                left, top, width, height = obj.location
-
-                # skip objects with invalid dimensions
-                if width <= 0 or height <= 0:
-                    return None
-                
-                # Skip objects outside screen bounds
-                if left < 0 or top < 0 or left >= screen_width or top >= screen_height:
-                    return None
-                
-                # Normalized coordinates
-                normalized_left = left / screen_width
-                normalized_top = top / screen_height
-                normalized_right = (left + width) / screen_width
-                normalized_bottom = (top + height) / screen_height
-
-                # calculate center point
-                center_x = (normalized_left + normalized_right) / 2
-                center_y  = (normalized_top + normalized_bottom)/ 2
-
-                # Create instruction text
-                instruction = self.create_instruction(obj)
-
-                return {
-                    "instruction": f'"{instruction}"',
-                    "bbox": [normalized_left, normalized_top, normalized_right, normalized_bottom],
-                    "point": [center_x, center_y]
-                }
-            
-            except Exception as e:
+    def extract_element_data(self, obj, screen_width, screen_height):
+        """
+        Extract data from a single accessibility object
+        """
+        try:
+            # Skip objects without location
+            if not hasattr(obj, 'location') or not obj.location:
                 return None
+            
+            left, top, width, height = obj.location
 
-        def create_instruction(self, obj):
-            """
-            Create descriptive instruction text for UI element
-            """
-            instruction_parts = []
+            # skip objects with invalid dimensions
+            if width <= 0 or height <= 0:
+                return None
+            
+            # Skip objects outside screen bounds
+            if left < 0 or top < 0 or left >= screen_width or top >= screen_height:
+                return None
+            
+            # Normalized coordinates
+            normalized_left = left / screen_width
+            normalized_top = top / screen_height
+            normalized_right = (left + width) / screen_width
+            normalized_bottom = (top + height) / screen_height
 
-            # Get name
-            if hasattr(obj, 'name') and obj.name:
-                instruction_parts.append(obj.name.strip())
+            # calculate center point
+            center_x = (normalized_left + normalized_right) / 2
+            center_y  = (normalized_top + normalized_bottom)/ 2
 
-            # Get role
-            if hasattr(obj, 'role') and obj.role:
-                try:
-                    role_name = obj.role.displayString
-                    if role_name and role_name not in instruction_parts:
-                        instruction_parts.append(role_name.lower())
-                except:
-                    pass
+            # Create instruction text
+            instruction = self.create_instruction(obj)
 
-            # Get description
-            if hasattr(obj, 'description') and obj.description:
-                desc = obj.description.strip()
-                if desc and desc not in instruction_parts:
-                    instruction_parts.append(desc)
-
-            # get value for inputs
-            if hasattr(obj, 'value') and obj.value:
-                value = obj.value.strip()
-                if value and len(value) < 50: # avoid very long values
-                    instruction_parts.append(f"value: {value}")
-
-            # Create final instruction
-            if instruction_parts:
-                instruction = " - ".join(instruction_parts)
-            else:
-                instruction = "UI element"
-
-            # Limit length
-            if len(instruction) > 100:
-                instruction = instruction[:97] + "..."
-
-            return instruction
+            return {
+                "instruction": f'"{instruction}"',
+                "bbox": [normalized_left, normalized_top, normalized_right, normalized_bottom],
+                "point": [center_x, center_y]
+            }
         
-        def create_json_output(self, screenshot_path, elements):
-            """
-            Create final JSON output in required format
-            """
-            # Get screenshot dimensions
-            try:
-                from PIL import Image
-                with Image.open(os.path.join(os.path.dirname(screenshot_path), screenshot_path)) as img:
-                    width, height = img.size
-            except:
-                # Fallback to screen dimensions
-                width = win32api.GetSystemMetrics(0)
-                height = win32api.GetSystemMetrics(1)
+        except Exception as e:
+            return None
 
-            return [{
-                "img_url": screenshot_path,
-                "img_size": [width, height],
-                "element": elements,
-                "element_size": len(elements)
-            }]
+    def create_instruction(self, obj):
+        """
+        Create descriptive instruction text for UI element
+        """
+        instruction_parts = []
+
+        # Get name
+        if hasattr(obj, 'name') and obj.name:
+            instruction_parts.append(obj.name.strip())
+
+        # Get role
+        if hasattr(obj, 'role') and obj.role:
+            try:
+                role_name = obj.role.displayString
+                if role_name and role_name not in instruction_parts:
+                    instruction_parts.append(role_name.lower())
+            except:
+                pass
+
+        # Get description
+        if hasattr(obj, 'description') and obj.description:
+            desc = obj.description.strip()
+            if desc and desc not in instruction_parts:
+                instruction_parts.append(desc)
+
+        # get value for inputs
+        if hasattr(obj, 'value') and obj.value:
+            value = obj.value.strip()
+            if value and len(value) < 50: # avoid very long values
+                instruction_parts.append(f"value: {value}")
+
+        # Create final instruction
+        if instruction_parts:
+            instruction = " - ".join(instruction_parts)
+        else:
+            instruction = "UI element"
+
+        # Limit length
+        if len(instruction) > 100:
+            instruction = instruction[:97] + "..."
+
+        return instruction
+    
+    def create_json_output(self, screenshot_path, elements):
+        """
+        Create final JSON output in required format
+        """
+        # Get screenshot dimensions
+        try:
+            from PIL import Image
+            screenshot_full_path = os.path.join(os.path.expanduser("~"), "Desktop", "nvda_dumps", screenshot_path)
+            with Image.open(screenshot_full_path) as img:
+                width, height = img.size
+        except:
+            # Fallback to screen dimensions
+            width = win32api.GetSystemMetrics(0)
+            height = win32api.GetSystemMetrics(1)
+
+        return [{
+            "img_url": screenshot_path,
+            "img_size": [width, height],
+            "element": elements,
+            "element_size": len(elements)
+        }]
